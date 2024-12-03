@@ -1,43 +1,47 @@
-input = File.read('test.txt')
+input = File.read('input.txt')
 
 reports = input.split(/\n/)
 safe_reports = 0
 
-reports.each do |report|
-    unsafe_levels = 0
-    levels = report.split
-    levels.map!(&:to_i)
+def verify(levels)
     prev = levels[0]
     is_safe = true
     increasing = prev < levels[1]
-    increasing_count = 0
-    decreasing_count = 0
-    increasing_count += 1 if increasing
-    decreasing_count += 1 if !increasing
-    diff_too_big = false
-    levels[1..].each_with_index do |l, idx|
+    levels[1..].each do |l|
         diff = (l - prev).abs
         if (diff >= 1 && diff <= 3)
             if (prev < l && increasing)
                 is_safe = true
-                increasing_count += 1
             elsif (prev > l && !increasing)
                 is_safe = true
-                decreasing_count += 1
             else
                 is_safe = false
+                break
             end
         else
             is_safe = false
-            if diff > 3
-                diff_too_big = true
-                break
-            end
+            break
         end 
         prev = l
     end
-    is_safe = true if (decreasing_count == 1 || increasing_count == 1) && !diff_too_big
-    safe_reports += 1 if is_safe
+    return is_safe
+end
+
+reports.each do |report|
+    levels = report.split
+    levels.map!(&:to_i)
+    is_safe = verify(levels)
+    if is_safe
+        safe_reports += 1
+    else
+        levels.each_with_index do |level, idx|
+            valid = verify(levels.dup.tap{|i| i.delete_at(idx)})
+            if valid
+                safe_reports += 1
+                break
+            end
+        end
+    end
 end
 
 puts safe_reports
